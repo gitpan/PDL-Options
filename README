@@ -1,0 +1,334 @@
+
+PDL::Options
+------------
+
+This module provides generalised option handling for PDL.
+It allows a hash of default values to be merged with a hash
+of options allowing for case insensitivty, minimum matching
+of hash keywords, support for synonyms (eg Color and Colour)
+and translation of values to standard form (eg 'blue' can
+be translated to '#0000ff').
+
+This module is distributed as part of PDL (perl data language,
+http://pdl.perl.org) also available on CPAN.
+
+It has been extracted from PDL becuase it is felt that it 
+could be of use to the general perl community and is required
+by some other modules on CPAN (eg Chart::XMGR).
+
+
+Building and installation
+-------------------------
+
+This module follows the standard CPAN rules for building and
+installation:
+
+  % perl Makefile.PL
+  % make
+  % make test
+  % make install
+
+Author
+------
+
+Copyright (C) Tim Jenness 1998 (t.jenness@jach.hawaii.edu).  All
+rights reserved. There is no warranty. You are allowed to redistribute
+this software / documentation under certain conditions. For details,
+see the file COPYING in the PDL distribution.
+
+
+POD documentation
+-----------------
+
+NAME
+    PDL::Options - simplifies option passing by hash in PerlDL
+
+SYNOPSIS
+      use PDL::Options;
+
+      $hashref = parse( \%defaults, \%user_options);
+
+      use PDL::Options ();
+
+      $opt = new PDL::Options;
+      $opt = new PDL::Options ( \%defaults );
+
+      $opt->defaults ( \%defaults );
+      $opt->synonyms ( { 'COLOR' => 'COLOUR' } );
+
+      $hashref = $opt->defaults;
+
+      $opt->options ( \%user_options );
+
+      $hashref = $opt->options;
+
+      $opt->incremental(1);
+      $opt->full_options(0);
+
+DESCRIPTION
+    Object to simplify option passing for PerlDL subroutines. Allows you to
+    merge a user defined options with defaults. A simplified (non-OO)
+    interface is provided.
+
+NON-OO INTERFACE
+    A simplified non-object oriented interface is provided. These routines
+    are exported into the callers namespace by default.
+
+    parse( \%defaults, \%user_options)
+        This will parse user options by using the defaults. The following
+        settings are used for parsing: The options can be case-insensitive,
+        a default synonym table is consulted (currently just contains a
+        synonym for COLOUR), minimum-matching is turned on, translation of
+        values is not performed.
+
+        A hash (not hash reference) containing the processed options is
+        returned.
+
+          %options = parse( { LINE => 1, COLOUR => 'red'}, { COLOR => 'blue'});
+
+METHODS
+    The following methods are available to PDL::Options objects.
+
+    new()
+        Constructor. Creates the object. With an optional argument can also
+        set the default options.
+
+    defaults( \%defaults )
+        Method to set or return the current defaults. The argument should be
+        a reference to a hash. The hash reference is returned if no
+        arguments are supplied.
+
+        The current values are reset whenever the defaults are changed.
+
+    synonyms( \%synonyms )
+        Method to set or return the current synonyms. The argument should be
+        a reference to a hash. The hash reference is returned if no
+        arguments are supplied.
+
+        This allows you to provide alternate keywords (such as allowing
+        'COLOR' as an option when your defaults uses 'COLOUR').
+
+    current
+        Returns the current state of the options. This is returned as a hash
+        reference (although it is not a reference to the actual hash stored
+        in the object). If full_options() is true the full options hash is
+        returned, if full_options() is false only the modified options are
+        returned (as set by the last call to options()).
+
+    translation
+        Provide translation of options to more specific values that are
+        recognised by the program. This allows, for example, the automatic
+        translation of the string 'red' to '#ff0000'.
+
+        This method can be used to setup the dictionary and is hash
+        reference with the following structure:
+
+            OPTIONA => {
+                        'string1' => decode1,
+                        'string2' => decode2
+                        },
+            OPTIONB => {
+                        's4' => decodeb1,
+                       }
+            etc....
+
+        Where OPTION? corresponds to the top level option name as stored in
+        the defaults array (eg LINECOLOR) and the anonymous hashes provide
+        the translation from string1 ('red') to decode1 ('#ff0000').
+
+        An options string will be translated automatically during the main
+        options() processing if autotrans() is set to true. Else translation
+        can be initiated by the user using the translate() method.
+
+    incremental
+        Specifies whether the user defined options will be treated as
+        additions to the current state of the object (1) or modifications to
+        the default values only (0).
+
+        Can be used to set or return this value. Default is false.
+
+    full_options
+        Governs whether a complete set of options is returned (ie defaults +
+        expanded user options), true, or if just the expanded user options
+        are returned, false (ie the values specified by the user).
+
+        This can be useful when you are only interested in the changes to
+        the options rather than knowing the full state. (For example, if
+        defaults contains keys for COLOUR and LINESTYLE and the user
+        supplied a key of COL, you may simply be interested in the
+        modification to COLOUR rather than the state of LINESTYLE and
+        COLOUR.)
+
+        Default is true.
+
+    casesens
+        Specifies whether the user defined options will be processed
+        independent of case (0) or not (1). Default is to be case
+        insensitive.
+
+        Can be used to set or return this value.
+
+    minmatch
+        Specifies whether the user defined options will be minimum matched
+        with the defaults (1) or whether the user defined options should
+        match the default keys exactly. Defaults is true (1).
+
+        If a particular key matches exactly (within the constraints imposed
+        bby case sensitivity) this key will always be taken as correct even
+        if others are similar. For example COL would match COL and COLOUR
+        but this implementation will always return COL in this case (note
+        that for CO it will return both COL and COLOUR and pick one at
+        random.
+
+        Can be used to set or return this value.
+
+    autotrans
+        Specifies whether the user defined options will be processed via the
+        translate() method immediately following the main options parsing.
+        Default is to autotranslate (1).
+
+        Can be used to set or return this value.
+
+    casesenstrans
+        Specifies whether the keys in the options hash will be matched
+        insensitive of case (0) during translation() or not (1). Default is
+        to be case insensitive.
+
+        Can be used to set or return this value.
+
+    minmatchtrans
+        Specifies whether the keys in the options hash will be minimum
+        matched during translation(). Default is false (0).
+
+        If a particular key matches exactly (within the constraints imposed
+        bby case sensitivity) this key will always be taken as correct even
+        if others are similar. For example COL would match COL and COLOUR
+        but this implementation will always return COL in this case (note
+        that for CO it will return both COL and COLOUR and pick one at
+        random.
+
+        Can be used to set or return this value.
+
+    debug
+        Turn on or off debug messages. Default is off (0). Can be used to
+        set or return this value.
+
+    options
+        Takes a set of user-defined options (as a reference to a hash) and
+        merges them with the current state (or the defaults; depends on the
+        state of incremental()).
+
+        The user-supplied keys will be compared with the defaults. Case
+        sensitivity and minimum matching can be configured using the
+        mimatch() and casesens() methods.
+
+        A warning is raised if keys present in the user options are not
+        present in the defaults.
+
+        A reference to a hash containing the merged options is returned.
+
+          $merged = $opt->options( { COL => 'red', Width => 1});
+
+        The state of the object can be retrieved after this by using the
+        current() method or by using the options() method with no arguments.
+        If full_options() is true, all options are returned (options plus
+        overrides), if full_options() is false then only the modified
+        options are returned.
+
+        Synonyms are supported if they have been configured via the
+        synonyms() method.
+
+    translate
+        Translate the current option values (eg those set via the options()
+        method) using the provided translation().
+
+        This method updates the current state of the object and returns the
+        updated options hash as a reference.
+
+            $ref = $opt->translate;
+
+EXAMPLE
+    Two examples are shown. The first uses the simplified interface and the
+    second uses the object-oriented interface.
+
+Non-OO
+       use PDL::Options (':Func');
+
+       %options = parse( { 
+                       LINE => 1, 
+                       COLOUR => 'red',
+                      },
+                      { 
+                       COLOR => 'blue'
+                      }
+                    );  
+
+    This will return a hash containg
+
+        %options = (
+                     LINE => 1,
+                     COLOUR => 'blue'
+                   )
+
+Object oriented
+    The following example will try to show the main points:
+
+       use PDL::Options ();
+
+       # Create new object and supply defaults
+       $opt = new PDL::Options(   { Colour => 'red',
+                                    LineStyle => 'dashed',
+                                    LineWidth => 1
+                                  }
+                               );
+
+       # Create synonyms
+       $opt->synonyms( { Color => 'Colour' } );
+
+       # Create translation dictionary
+       $opt->translation( { Colour => {
+                             'blue' => '#0000ff',
+                             'red'  => '#ff0000',
+                             'green'=> '#00ff00'
+                                    },
+                            LineStyle => {
+                             'solid' => 1,
+                             'dashed' => 2,
+                             'dotted' => 3
+                             }
+                          }
+                        );
+
+       # Generate and parse test hash
+       $options = $opt->options( { Color => 'green',
+                                   lines => 'solid',
+                                  }
+                               );
+
+    When this code is run, $options will be the reference to a hash
+    containing the following:
+
+       Colour => '#00ff00',
+       LineStyle => 1,
+       LineWidth => 1
+
+    If full_options() was set to false (0), $options would be a reference to
+    a hash containing:
+
+       Colour => '#00ff00',
+       LineStyle => 1
+
+    Minimum matching and case insensitivity can be configured for both the
+    initial parsing and for the subsequent translating. The translation can
+    be turned off if not desired.
+
+    Currently synonyms are not available for the translation although this
+    could be added quite simply.
+
+AUTHOR
+    Copyright (C) Tim Jenness 1998 (t.jenness@jach.hawaii.edu). All rights
+    reserved. There is no warranty. You are allowed to redistribute this
+    software / documentation under certain conditions. For details, see the
+    file COPYING in the PDL distribution. If this file is separated from the
+    PDL distribution, the copyright notice should be included in the file.
+
